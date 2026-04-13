@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./global.css" />
+  <link rel="stylesheet" href="./frame-2.css" />
+  <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=ABeeZee:wght@400&display=swap"
+  />
+  <title>Drag and Drop</title>
+</head>
+<body>
+<div class="iphone-mini">
+  <header class="component-parent">
+    <div class="component">
+      <div class="component-child"></div>
+      <div class="frame-parent">
+        <div class="peek-a-palooza-wrapper">
+          <h2 class="peek-a-palooza">Peek-A-Palooza</h2>
+        </div>
+        <div class="emoji-dog-face-wrapper">
+          <img
+                  class="emoji-dog-face"
+                  alt=""
+                  src="./public/-emoji-dog-face.svg"
+          />
+        </div>
+      </div>
+      <div class="frame-group">
+        <div class="vecteezy-dragand-drop-iconfory-parent">
+          <div class="vecteezy-dragand-drop-iconfory">
+            <img
+                    class="emoji-cow-face1"
+                    alt=""
+                    src="./public/-emoji-cow-face.svg"
+            />
+          </div>
+          <div class="emoji-lion-face-container">
+            <img
+                    class="emoji-lion-face1"
+                    alt=""
+                    src="./public/-emoji-lion-face-1.svg"
+            />
+          </div>
+        </div>
+        <div class="button-wrapper">
+          <button class="button" id="button">
+            <div class="arrowbackwardcircle-wrapper">
+              <img
+                      class="arrowbackwardcircle-icon"
+                      alt=""
+                      src="./public/arrowbackwardcircle.svg"
+              />
+            </div>
+            <div class="button1">Back To Home</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="iphone-mini-child"></div>
+  <div class="f-r-a-m-e-c-o-n-t-a-c-t-u-s">
+    <div class="rectangle-parent">
+      <div class="frame-child"></div>
+      <div id="rectangle-group1" class="rectangle-group">
+        <div class="frame-item"></div>
+        <img
+                id="vecteezy-drag-and-drop-icon-fo"
+                class="vecteezy-drag-and-drop-icon-fo"
+                loading="lazy"
+                alt=""
+                src="./public/vecteezy-draganddropiconforyourwebsitemobilepresentation-20816341-1@2x.png"
+        />
+      </div>
+    </div>
+    <div class="rectangle-container">
+      <div class="frame-inner"></div>
+      <div class="pictures">Pictures</div>
+      <div id="frame-inner1">
+        <img
+                class="drag2"
+                id="airplane"
+                src="airplane.jpg"
+                draggable="true"
+                width="200"
+                height="200"
+        />
+        <img
+                class="drag2"
+                id="bird"
+                src="bird.jpg"
+                draggable="true"
+                width="200"
+                height="200"
+        />
+        <img
+                class="drag2"
+                id="car"
+                src="car.jpg"
+                draggable="true"
+                width="200"
+                height="200"
+        />
+        <img
+                class="drag2"
+                id="deer"
+                src="deer.jpg"
+                draggable="true"
+                width="200"
+                height="200"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Redirect to Home Page
+  const button = document.getElementById("button");
+  if (button) {
+    button.addEventListener("click", function () {
+      window.location.href = "./index.html";
+    });
+  }
+
+  // Drag and Drop Logic
+  const rightBox = document.getElementById("rectangle-group1");
+  const leftBox = document.getElementById("frame-inner1");
+  const draggableItems = document.querySelectorAll(".drag2");
+
+  // Add dragstart event to draggable images
+  draggableItems.forEach((item) => {
+    item.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", event.target.id);
+      console.log("Drag Start:", event.target.id);
+    });
+  });
+
+  // Handle drop in rightBox
+  rightBox.addEventListener("dragover", (event) => {
+    event.preventDefault();
+  });
+
+  rightBox.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    console.log("Drop event triggered!");
+
+    const data = event.dataTransfer.getData("text/plain");
+    const draggedElement = document.getElementById(data);
+    if (!draggedElement) return;
+
+    // Check if the dragged element is an image
+    if (draggedElement.tagName.toLowerCase() === "img") {
+      const nodeCopy = draggedElement.cloneNode(true);
+      nodeCopy.id = `newId-${Date.now()}`; // Unique ID for the cloned element
+      if (rightBox && nodeCopy) {
+        rightBox.appendChild(nodeCopy);
+
+        const imageURI = nodeCopy.src || nodeCopy.getAttribute("src");
+        console.log("Image URI being sent:", imageURI);
+
+        // Send image URI to backend
+        try {
+          // Use provided fetch code to send the URI
+          const uri = imageURI; // Image URI sent after drop
+          const response = await fetch("http://localhost:5000/image-uri", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ uri: uri }),
+          });
+
+          const data = await response.json();
+          if (data.result) {
+            console.log("Prediction:", data.result);
+            showToast(`Prediction: ${data.result}`);
+          } else {
+            console.error("Error:", data.error);
+            showToast("Error during prediction", true);
+          }
+        } catch (error) {
+          console.error("Error during fetch:", error);
+          showToast("Failed to send request to backend", true);
+        }
+      }
+    }
+  });
+
+  // Toast Notification Function
+  function showToast(message, isError = false) {
+    const toast = document.createElement("div");
+    toast.textContent = message;
+    toast.style.position = "fixed";
+    toast.style.bottom = "10px";
+    toast.style.left = "10px";
+    toast.style.backgroundColor = isError ? "red" : "green";
+    toast.style.color = "white";
+    toast.style.padding = "10px";
+    toast.style.borderRadius = "5px";
+    toast.style.zIndex = "1000";
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, 5000);
+  }
+</script>
+</body>
+</html>
